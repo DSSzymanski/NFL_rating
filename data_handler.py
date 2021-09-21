@@ -25,4 +25,11 @@ class DataHandler:
     
     @staticmethod
     def get_games_file_data():
-        return [game for game in csv.DictReader(open(GAMES_FILE))]
+        data = [game for game in csv.DictReader(open(GAMES_FILE))]
+        data = data[:12947] #trim not-yet played games from data
+        
+        #cast number strings to ints
+        for game in data:
+            game['score_home'], game['score_away'] = int(game['score_home']), int(game['score_away'])
+            
+        return data
