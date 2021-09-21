@@ -1,5 +1,3 @@
-import data_handler as dh
-
 K = 20
 
 class EloCalculator:
