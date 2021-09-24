@@ -140,4 +140,8 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
         else:
             result_stats["Wrong"] += 1
     
-    return result_stats
+    percent = result_stats["Right"] / (result_stats["Right"] + result_stats["Wrong"])
+    
+    return [result_stats, percent]
+
+print(prediction_expanded_stats(K=106, rating_factor=704, hfa_val=121))
