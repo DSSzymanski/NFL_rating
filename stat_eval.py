@@ -62,7 +62,7 @@ def calc_end_elo(eval_fn, args):
     for team_id, elo in team_elo.items():
         print(f"{team_id}:  {elo}")
         
-def prediction_stats(eval_fn, exp_fn, args):
+def prediction_basic_stats():
     team_data = DataHandler.get_teams_file_data()
     team_id_dict = DataHandler.team_name_to_id_dict(team_data)
     games = DataHandler.get_games_file_data()
@@ -73,7 +73,7 @@ def prediction_stats(eval_fn, exp_fn, args):
         team_home = team_id_dict[game['team_home']]
         team_away = team_id_dict[game['team_away']]
         
-        game['Prediction'] = ec.HOME_WIN if exp_fn(team_elo[team_home], team_elo[team_away], args) >= .5 else ec.HOME_LOSS
+        game['Prediction'] = ec.HOME_WIN if ec.EloCalculator.basic_expected(team_elo[team_home], team_elo[team_away]) >= .5 else ec.HOME_LOSS
         
         #calc if home win, draw, or home loss
         if game['score_home'] == game['score_away']:
@@ -85,7 +85,7 @@ def prediction_stats(eval_fn, exp_fn, args):
             
         game['Result'] = result
             
-        changes = eval_fn(team_elo[team_home], team_elo[team_away], result, args)
+        changes = ec.EloCalculator.basic_elo_change(team_elo[team_home], team_elo[team_away], result)
         team_elo[team_home] += changes['Home Change']
         team_elo[team_away] += changes['Away Change']
         
@@ -96,11 +96,48 @@ def prediction_stats(eval_fn, exp_fn, args):
         else:
             result_stats["Wrong"] += 1
     
-    return [team_elo, result_stats]
+    return result_stats
 
-args = {
-}
-[elo, results] = prediction_stats(ec.EloCalculator.basic_elo_change, ec.EloCalculator.basic_expected, args)
-print(elo)
-print(results)
-print(results['Right']/(results['Right'] + results['Wrong']))
+def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
+    team_data = DataHandler.get_teams_file_data()
+    team_id_dict = DataHandler.team_name_to_id_dict(team_data)
+    games = DataHandler.get_games_file_data()
+    team_elo = DataHandler.elo_dict(team_id_dict)
+    
+    for game in games:
+        #get team ids for both teams
+        team_home = team_id_dict[game['team_home']]
+        team_away = team_id_dict[game['team_away']]
+        
+        if game['stadium_neutral'] == "FALSE":
+            hfa = hfa_val
+        else:
+            hfa = 0
+        
+        if ec.EloCalculator.expanded_expected(team_elo[team_home], team_elo[team_away], rating_factor, hfa) >= .5:
+            game['Prediction'] = ec.HOME_WIN
+        else:
+            game['Prediction'] = ec.HOME_LOSS
+        
+        #calc if home win, draw, or home loss
+        if game['score_home'] == game['score_away']:
+            result = ec.HOME_DRAW
+        elif game['score_home'] > game['score_away']:
+            result = ec.HOME_WIN
+        else:
+            result = ec.HOME_LOSS
+            
+        game['Result'] = result
+            
+        changes = ec.EloCalculator.expanded_elo_change(team_elo[team_home], team_elo[team_away], result, K, rating_factor, hfa)
+        team_elo[team_home] += changes['Home Change']
+        team_elo[team_away] += changes['Away Change']
+        
+    result_stats = {"Right": 0, "Wrong": 0}
+    for game in games:
+        if game['Prediction'] == game['Result']:
+            result_stats["Right"] += 1
+        else:
+            result_stats["Wrong"] += 1
+    
+    return result_stats
