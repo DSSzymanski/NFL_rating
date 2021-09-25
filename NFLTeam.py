@@ -34,3 +34,6 @@ class NFLTeam:
     
     def inc_elo(self, change):
         self.elo += change
+        
+    def scale_elo(self, rate):
+        self.elo *= rate

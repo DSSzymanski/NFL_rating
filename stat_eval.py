@@ -98,52 +98,51 @@ def prediction_basic_stats():
     
     return result_stats
 
-def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
-    team_data = DataHandler.get_teams_file_data()
-    team_id_dict = DataHandler.team_name_to_id_dict(team_data)
+def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=.95):
+    teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
-    team_elo = DataHandler.elo_dict(team_id_dict)
+    result_stats = {"Right": 0, "Wrong": 0}
     team_season = {}
-    for team in team_elo.keys():
+    
+    for team in set(teams.values()):
         team_season[team] = ''
         
-    for game in games[:25]:
+    for game in games:
         #get team ids for both teams
-        team_home = team_id_dict[game['team_home']]
-        team_away = team_id_dict[game['team_away']]
+        team_home = teams[game['team_home']]
+        team_away = teams[game['team_away']]
+        
         for team in [team_home, team_away]:
             if team_season[team] == '':
                 team_season[team] = game['schedule_season']
             elif team_season[team] != game['schedule_season']:
                 team_season[team] = game['schedule_season']
-                team_elo[team] *= .95
+                team.scale_elo(season_scale)
         
         if game['stadium_neutral'] == "FALSE":
             hfa = hfa_val
         else:
             hfa = 0
         
-        if ec.EloCalculator.expanded_expected(team_elo[team_home], team_elo[team_away], rating_factor, hfa) >= .5:
-            game['Prediction'] = ec.HOME_WIN
+        if ec.expanded_expected(team_home.get_elo(), team_away.get_elo(), rating_factor, hfa) >= .5:
+            game['Prediction'] = HOME_WIN
         else:
-            game['Prediction'] = ec.HOME_LOSS
+            game['Prediction'] = HOME_LOSS
         
         #calc if home win, draw, or home loss
         if game['score_home'] == game['score_away']:
-            result = ec.HOME_DRAW
+            result = HOME_DRAW
         elif game['score_home'] > game['score_away']:
-            result = ec.HOME_WIN
+            result = HOME_WIN
         else:
-            result = ec.HOME_LOSS
+            result = HOME_LOSS
             
         game['Result'] = result
             
-        changes = ec.EloCalculator.expanded_elo_change(team_elo[team_home], team_elo[team_away], result, K, rating_factor, hfa)
-        team_elo[team_home] += changes['Home Change']
-        team_elo[team_away] += changes['Away Change']
+        changes = ec.expanded_elo_change(team_home.get_elo(), team_away.get_elo(), result, K, rating_factor, hfa)
+        team_home.inc_elo(changes['Home Change'])
+        team_away.inc_elo(changes['Away Change'])
         
-    result_stats = {"Right": 0, "Wrong": 0}
-    for game in games:
         if game['Prediction'] == game['Result']:
             result_stats["Right"] += 1
         else:
@@ -153,4 +152,4 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
     
     return [result_stats, percent]
 
-print(prediction_basic_stats())
+print(prediction_expanded_stats())
