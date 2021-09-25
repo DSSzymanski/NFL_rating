@@ -67,6 +67,6 @@ def randomRF():
     return randint(50, 1000)
 
 def randomHFA():
-    return randint(0, 1000)
+    return randint(0, 500)
 
 genetic_algorithm(50, 25)

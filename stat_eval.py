@@ -103,11 +103,20 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
     team_id_dict = DataHandler.team_name_to_id_dict(team_data)
     games = DataHandler.get_games_file_data()
     team_elo = DataHandler.elo_dict(team_id_dict)
-    
-    for game in games:
+    team_season = {}
+    for team in team_elo.keys():
+        team_season[team] = ''
+        
+    for game in games[:25]:
         #get team ids for both teams
         team_home = team_id_dict[game['team_home']]
         team_away = team_id_dict[game['team_away']]
+        for team in [team_home, team_away]:
+            if team_season[team] == '':
+                team_season[team] = game['schedule_season']
+            elif team_season[team] != game['schedule_season']:
+                team_season[team] = game['schedule_season']
+                team_elo[team] *= .95
         
         if game['stadium_neutral'] == "FALSE":
             hfa = hfa_val
@@ -143,5 +152,3 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
     percent = result_stats["Right"] / (result_stats["Right"] + result_stats["Wrong"])
     
     return [result_stats, percent]
-
-print(prediction_expanded_stats(K=106, rating_factor=704, hfa_val=121))
