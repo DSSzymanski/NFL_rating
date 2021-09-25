@@ -1,4 +1,5 @@
 import csv
+from NFLTeam import NFLTeam
 
 GAMES_FILE = 'data/spreadspoke_scores.csv'
 TEAMS_FILE = 'data/nfl_teams.csv'
@@ -9,16 +10,22 @@ class DataHandler:
         return [entry for entry in csv.DictReader(open(TEAMS_FILE))]
     
     @staticmethod
-    def team_name_to_id_dict(data):
+    def get_teams(data):
         teams = {}
+        id_to_team = {}
         for entry in data:
-            teams[entry['team_name']] = entry['team_id']
+            if entry['team_id'] in id_to_team:
+                teams[entry['team_name']] = id_to_team[entry['team_id']]
+            else:
+                id_to_team[entry['team_id']] = NFLTeam(entry['team_id'])
+                teams[entry['team_name']] = id_to_team[entry['team_id']]
         return teams
         
     @staticmethod
     def elo_dict(data):
         elo = {}
         for team_id in data.values():
+            print(team_id)
             if team_id not in elo:
                 elo[team_id] = 1200
         return elo
