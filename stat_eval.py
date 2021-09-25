@@ -1,5 +1,5 @@
 from data_handler import DataHandler
-import elo_calculator as ec
+from elo_calculator import EloCalculator as ec, HOME_WIN, HOME_LOSS, HOME_DRAW
 
 def calc_win_loss():
     #init data
@@ -66,34 +66,31 @@ def calc_end_elo(eval_fn):
         print(team)
         
 def prediction_basic_stats():
-    team_data = DataHandler.get_teams_file_data()
-    team_id_dict = DataHandler.team_name_to_id_dict(team_data)
+    teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
-    team_elo = DataHandler.elo_dict(team_id_dict)
+    result_stats = {"Right": 0, "Wrong": 0}
     
     for game in games:
         #get team ids for both teams
-        team_home = team_id_dict[game['team_home']]
-        team_away = team_id_dict[game['team_away']]
+        team_home = teams[game['team_home']]
+        team_away = teams[game['team_away']]
         
-        game['Prediction'] = ec.HOME_WIN if ec.EloCalculator.basic_expected(team_elo[team_home], team_elo[team_away]) >= .5 else ec.HOME_LOSS
+        game['Prediction'] = HOME_WIN if ec.basic_expected(team_home.get_elo(), team_away.get_elo()) >= .5 else HOME_LOSS
         
         #calc if home win, draw, or home loss
         if game['score_home'] == game['score_away']:
-            result = ec.HOME_DRAW
+            result = HOME_DRAW
         elif game['score_home'] > game['score_away']:
-            result = ec.HOME_WIN
+            result = HOME_WIN
         else:
-            result = ec.HOME_LOSS
+            result = HOME_LOSS
             
         game['Result'] = result
             
-        changes = ec.EloCalculator.basic_elo_change(team_elo[team_home], team_elo[team_away], result)
-        team_elo[team_home] += changes['Home Change']
-        team_elo[team_away] += changes['Away Change']
+        changes = ec.basic_elo_change(team_home.get_elo(), team_away.get_elo(), result)
+        team_home.inc_elo(changes['Home Change'])
+        team_away.inc_elo(changes['Away Change'])
         
-    result_stats = {"Right": 0, "Wrong": 0}
-    for game in games:
         if game['Prediction'] == game['Result']:
             result_stats["Right"] += 1
         else:
@@ -156,4 +153,4 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
     
     return [result_stats, percent]
 
-calc_end_elo(ec.EloCalculator.basic_elo_change)
+print(prediction_basic_stats())
