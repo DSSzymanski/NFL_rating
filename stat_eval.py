@@ -1,10 +1,9 @@
 from data_handler import DataHandler
 import elo_calculator as ec
 
-def calc_win_loss_stats():
+def calc_win_loss():
     #init data
-    team_data = DataHandler.get_teams_file_data()
-    teams = DataHandler.get_teams(team_data)
+    teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
 
     for game in games:
@@ -23,40 +22,48 @@ def calc_win_loss_stats():
             team_home.add_loss()
             team_away.add_win()
 
-    
+    #get team classes from dict, get unique classes by converting to set, then resort to get
+    #alphabetical order by team id
     for team in sorted(set(teams.values())):
         print(team)
     
     sum_games = len(games)
+    #div by 2 bc each game increments 2 teams draw values
     sum_draws = int(sum([team.get_draws() for team in set(teams.values())]) / 2)
     print(f"Total Games: {sum_games}\t\tTotal Draws: {sum_draws}")
     
 #calc elo using inputed fn
-def calc_end_elo(eval_fn, args):
-    team_data = DataHandler.get_teams_file_data()
-    team_id_dict = DataHandler.team_name_to_id_dict(team_data)
+def calc_end_elo(eval_fn):
+    teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
-    team_elo = DataHandler.elo_dict(team_id_dict)
     
     for game in games:
         #get team ids for both teams
-        team_home = team_id_dict[game['team_home']]
-        team_away = team_id_dict[game['team_away']]
+        team_home = teams[game['team_home']]
+        team_away = teams[game['team_away']]
         
         #calc if home win, draw, or home loss
         if game['score_home'] == game['score_away']:
+            team_home.add_draw()
+            team_away.add_draw()
             result = ec.HOME_DRAW
         elif game['score_home'] > game['score_away']:
+            team_home.add_win()
+            team_away.add_loss()
             result = ec.HOME_WIN
         else:
+            team_home.add_loss()
+            team_away.add_win()
             result = ec.HOME_LOSS
             
-        changes = eval_fn(team_elo[team_home], team_elo[team_away], result, args)
-        team_elo[team_home] += changes['Home Change']
-        team_elo[team_away] += changes['Away Change']
-    
-    for team_id, elo in team_elo.items():
-        print(f"{team_id}:  {elo}")
+        changes = eval_fn(team_home.elo, team_away.elo, result)
+        team_home.inc_elo(changes['Home Change'])
+        team_away.inc_elo(changes['Away Change'])
+        
+    #get team classes from dict, get unique classes by converting to set, then resort to get
+    #alphabetical order by team id
+    for team in sorted(set(teams.values())):
+        print(team)
         
 def prediction_basic_stats():
     team_data = DataHandler.get_teams_file_data()
@@ -148,4 +155,5 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50):
     percent = result_stats["Right"] / (result_stats["Right"] + result_stats["Wrong"])
     
     return [result_stats, percent]
-calc_win_loss_stats()
+
+calc_end_elo(ec.EloCalculator.basic_elo_change)

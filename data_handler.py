@@ -6,11 +6,12 @@ TEAMS_FILE = 'data/nfl_teams.csv'
 
 class DataHandler:
     @staticmethod
-    def get_teams_file_data():
+    def _get_teams_file_data():
         return [entry for entry in csv.DictReader(open(TEAMS_FILE))]
     
     @staticmethod
-    def get_teams(data):
+    def get_teams():
+        data = DataHandler._get_teams_file_data()
         teams = {}
         id_to_team = {}
         for entry in data:

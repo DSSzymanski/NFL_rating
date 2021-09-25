@@ -28,3 +28,9 @@ class NFLTeam:
     
     def get_draws(self):
         return self.draws
+    
+    def get_elo(self):
+        return self.elo
+    
+    def inc_elo(self, change):
+        self.elo += change
