@@ -102,10 +102,6 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=
     teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
     result_stats = {"Right": 0, "Wrong": 0}
-    team_season = {}
-    
-    for team in set(teams.values()):
-        team_season[team] = ''
         
     for game in games:
         #get team ids for both teams
@@ -113,11 +109,7 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=
         team_away = teams[game['team_away']]
         
         for team in [team_home, team_away]:
-            if team_season[team] == '':
-                team_season[team] = game['schedule_season']
-            elif team_season[team] != game['schedule_season']:
-                team_season[team] = game['schedule_season']
-                team.scale_elo(season_scale)
+            team.adj_season(game['schedule_season'], season_scale)
         
         if game['stadium_neutral'] == "FALSE":
             hfa = hfa_val
@@ -151,5 +143,3 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=
     percent = result_stats["Right"] / (result_stats["Right"] + result_stats["Wrong"])
     
     return [result_stats, percent]
-
-print(prediction_expanded_stats())

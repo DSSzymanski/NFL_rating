@@ -5,6 +5,7 @@ class NFLTeam:
         self.wins = 0
         self.losses = 0
         self.draws = 0
+        self.curr_season = ''
         
     def __lt__(self, other):
         return self.id < other.id
@@ -32,8 +33,23 @@ class NFLTeam:
     def get_elo(self):
         return self.elo
     
+    def get_season(self):
+        return self.curr_season
+    
+    def set_season(self, season):
+        self.curr_season = season
+    
     def inc_elo(self, change):
         self.elo += change
         
     def scale_elo(self, rate):
-        self.elo *= rate
+        diff = self.elo - 1200
+        diff_adj = diff * rate
+        self.elo = 1200 + diff_adj
+        
+    def adj_season(self, season, rate):
+        if self.curr_season == '':
+            self.set_season(season)
+        elif self.curr_season != season:
+            self.set_season(season)
+            self.scale_elo(rate)
