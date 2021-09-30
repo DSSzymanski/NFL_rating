@@ -98,7 +98,7 @@ def prediction_basic_stats():
     
     return result_stats
 
-def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=.95):
+def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=.95, playoff_multiplier=2):
     teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
     result_stats = {"Right": 0, "Wrong": 0}
@@ -107,6 +107,7 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=
         #get team ids for both teams
         team_home = teams[game['team_home']]
         team_away = teams[game['team_away']]
+        playoff_bonus = playoff_multiplier if game['schedule_playoff'] else 0
         
         for team in [team_home, team_away]:
             team.adj_season(game['schedule_season'], season_scale)
@@ -130,8 +131,8 @@ def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=
             result = HOME_LOSS
             
         game['Result'] = result
-            
-        changes = ec.expanded_elo_change(team_home.get_elo(), team_away.get_elo(), result, K, rating_factor, hfa)
+        
+        changes = ec.expanded_elo_change(team_home.get_elo(), team_away.get_elo(), result, K, rating_factor, hfa, playoff_bonus)
         team_home.inc_elo(changes['Home Change'])
         team_away.inc_elo(changes['Away Change'])
         
