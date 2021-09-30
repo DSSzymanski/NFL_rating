@@ -61,7 +61,7 @@ class EloCalculator:
     """
 
     @staticmethod
-    def expanded_elo_change(home_elo, away_elo, result, k, rating_factor, hfa):
+    def expanded_elo_change(home_elo, away_elo, result, k, rating_factor, hfa, playoff_bonus):
         """
         Expanded_elo_change is the function for calculating elo using additional
         factors for the expected winner to find a model that accurately ranks
@@ -81,18 +81,19 @@ class EloCalculator:
                       teams. Keys are 'Home Change' for the home team and 'Away Change'
                       for the away team's elo change.
         """
+        #todo: doc playoff_bonus
         home_expected = EloCalculator.expanded_expected(home_elo, away_elo, rating_factor, hfa)
         away_expected = EloCalculator.expanded_expected(away_elo, home_elo, rating_factor, 1-hfa)
-        print(home_expected, away_expected)
+        
         if result == HOME_DRAW:
-            home_change = k * (0.5 - home_expected)
-            away_change = k * (0.5 - away_expected)
+            home_change = k * playoff_bonus * (0.5 - home_expected)
+            away_change = k * playoff_bonus * (0.5 - away_expected)
         elif result == HOME_WIN:
-            home_change = k * (1 - home_expected)
-            away_change = k * (0 - away_expected)
+            home_change = k * playoff_bonus * (1 - home_expected)
+            away_change = k * playoff_bonus * (0 - away_expected)
         else: #HOME_LOSS
-            home_change = k * (0 - home_expected)
-            away_change = k * (1 - away_expected)
+            home_change = k * playoff_bonus * (0 - home_expected)
+            away_change = k * playoff_bonus * (1 - away_expected)
 
         return {'Home Change': home_change, 'Away Change': away_change}
 
