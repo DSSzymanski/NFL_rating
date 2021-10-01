@@ -25,7 +25,11 @@ Classes:
             inc_elo(int)
             _scale_elo(float)
             adj_season(str, float)
+            record(str)
 """
+
+import numpy as np
+
 class NFLTeam:
     """
     Class NFLTeam is used to store data for each NFL team. NFLTeam controls the
@@ -58,7 +62,7 @@ class NFLTeam:
     draws : int
         number of team's draws
     curr_season : string
-        string value representing the season of the last game used to change 
+        string value representing the season of the last game used to change
         elo and add a win/loss/draw.
 
     Methods
@@ -87,6 +91,9 @@ class NFLTeam:
     adj_season(str season, float rate):
         checks if curr_season matches input season. If it doesn't, it updates
         the season and calls _scale_elo to adjust the elo.
+    record(str date):
+        records inputed date (casted to np.datetime64) to self.date_history and
+        self.elo to self.elo_history. Called after a game is played for graphing.
     """
     def __init__(self, input_id):
         self.team_id = input_id #team_id from data/nfl_teams
@@ -95,6 +102,8 @@ class NFLTeam:
         self.losses = 0
         self.draws = 0
         self.curr_season = ''
+        self.date_history = np.array([])
+        self.elo_history = np.array([])
 
     def __lt__(self, other):
         """
@@ -113,8 +122,15 @@ class NFLTeam:
 
         :return string: returns stats in a string.
         """
-        return f'{self.team_id}\tElo: {self.elo}, Wins: {self.wins}, Losses: \
-                 {self.losses}, WR: {self.get_win_percent()}'
+        ret_str = f'{self.team_id}\t' +\
+                  f'Elo: {self.elo}, ' +\
+                  f'Wins: {self.wins}, ' +\
+                  f'Losses: {self.losses}, ' +\
+                  f'Draws: {self.draws}, ' +\
+                  f'WR: {self.get_win_percent()}'
+
+        return ret_str
+
 
     def add_win(self):
         """
@@ -210,3 +226,13 @@ class NFLTeam:
         elif self.curr_season != season: #update season and elo
             self.set_season(season)
             self._scale_elo(rate)
+
+    def record(self, date):
+        """
+        Records inputed date in date_history and current elo in elo_history for
+        graphing purposes.
+
+        :param date: date string where elo for the team changed.
+        """
+        self.date_history = np.append(self.date_history, date)
+        self.elo_history = np.append(self.elo_history, self.elo)

@@ -80,10 +80,16 @@ def prediction_basic_stats():
         #calc if home win, draw, or home loss
         if game['score_home'] == game['score_away']:
             result = HOME_DRAW
+            team_home.add_draw()
+            team_away.add_draw()
         elif game['score_home'] > game['score_away']:
             result = HOME_WIN
+            team_home.add_win()
+            team_away.add_loss()
         else:
             result = HOME_LOSS
+            team_home.add_loss()
+            team_away.add_win()
             
         game['Result'] = result
             
@@ -91,12 +97,15 @@ def prediction_basic_stats():
         team_home.inc_elo(changes['Home Change'])
         team_away.inc_elo(changes['Away Change'])
         
+        team_home.record(game['schedule_date'])
+        team_away.record(game['schedule_date'])
+        
         if game['Prediction'] == game['Result']:
             result_stats["Right"] += 1
         else:
             result_stats["Wrong"] += 1
     
-    return result_stats
+    return [result_stats, teams]
 
 def prediction_expanded_stats(K=32, rating_factor=400, hfa_val=50, season_scale=.95, playoff_multiplier=2):
     teams = DataHandler.get_teams()

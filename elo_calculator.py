@@ -162,4 +162,4 @@ class EloCalculator:
         rating_factor = 400 #standard rating factor
         exp = (t2_elo - t1_elo) / rating_factor
         base = 1 + 10 ** exp
-        return 1 / base()
+        return 1 / base
