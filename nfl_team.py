@@ -26,6 +26,7 @@ Classes:
             _scale_elo(float)
             adj_season(str, float)
             record(str)
+            get_graph_data() -> list
 """
 
 import numpy as np
@@ -94,6 +95,8 @@ class NFLTeam:
     record(str date):
         records inputed date (casted to np.datetime64) to self.date_history and
         self.elo to self.elo_history. Called after a game is played for graphing.
+    get_graph_data():
+        returns list with self.date_history and self.elo_history.
     """
     def __init__(self, input_id):
         self.team_id = input_id #team_id from data/nfl_teams
@@ -236,3 +239,12 @@ class NFLTeam:
         """
         self.date_history = np.append(self.date_history, np.datetime64(date))
         self.elo_history = np.append(self.elo_history, self.elo)
+
+    def get_graph_data(self):
+        """
+        Returns self.date_history and self.elo_history for graphing.
+
+        :return list: returns list filled wiith self.date_history and
+                       self.elo_history.
+        """
+        return [self.date_history, self.elo_history]

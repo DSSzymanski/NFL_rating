@@ -5,7 +5,7 @@ for the different nfl_team objects.
 Classes:
     EloCalculator:
         Methods:
-            static expanded_elo_change(int, int, int, int, int int) -> dict
+            static expanded_elo_change(int, int, int, int, int, int, flaot) -> dict
             static expanded_expected(int, int, int, int) -> float
             static basic_elo_change(int, int, int) -> dict
             static basic_expected(int, int) -> float
@@ -76,15 +76,16 @@ class EloCalculator:
                         function.
         :param hfa: int for the home field advantage for the home team. Used
                         in the expected winner function.
+        :param playoff_bonus: int representing multiplier that's applied to the
+                              elo changes if the game is a post-season game.
 
         :return dict: returns dictionary with the amount of elo change for both
                       teams. Keys are 'Home Change' for the home team and 'Away Change'
                       for the away team's elo change.
         """
-        #todo: doc playoff_bonus
         home_expected = EloCalculator.expanded_expected(home_elo, away_elo, rating_factor, hfa)
         away_expected = EloCalculator.expanded_expected(away_elo, home_elo, rating_factor, 1-hfa)
-        
+
         if result == HOME_DRAW:
             home_change = k * playoff_bonus * (0.5 - home_expected)
             away_change = k * playoff_bonus * (0.5 - away_expected)
