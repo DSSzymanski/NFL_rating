@@ -102,7 +102,7 @@ class NFLTeam:
         self.losses = 0
         self.draws = 0
         self.curr_season = ''
-        self.date_history = np.array([])
+        self.date_history = np.array([], dtype='datetime64')
         self.elo_history = np.array([])
 
     def __lt__(self, other):
@@ -234,5 +234,5 @@ class NFLTeam:
 
         :param date: date string where elo for the team changed.
         """
-        self.date_history = np.append(self.date_history, date)
+        self.date_history = np.append(self.date_history, np.datetime64(date))
         self.elo_history = np.append(self.elo_history, self.elo)

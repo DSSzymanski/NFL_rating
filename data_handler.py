@@ -94,5 +94,10 @@ class DataHandler:
         for game in data:
             game['score_home'], game['score_away'] = \
                 int(game['score_home']), int(game['score_away'])
-
+            date = game['schedule_date'].split('/')
+            if len(date[0]) == 1:
+                date[0] = '0' + date[0]
+            if len(date[1]) == 1:
+                date[1] = '0' + date[1]
+            game['schedule_date'] = date[2]+ '-' + date[0] + '-' + date[1]
         return data
