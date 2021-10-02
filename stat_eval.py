@@ -3,9 +3,16 @@ from elo_calculator import EloCalculator as ec
 from elo_calculator import HOME_WIN, HOME_LOSS, HOME_DRAW
 
 def calc_win_loss():
+    """
+    Calculates and prints each nfl_teams wins, losses, draws, and winrates to
+    console after evaluating every game in the data. Also counts up the total
+    number of games and amount of draws and prints them to the console.
+    """
     #init data
     teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
+    draw_cnt = 0
+    game_cnt = 0
 
     for game in games:
         #get team ids for both teams
@@ -16,22 +23,21 @@ def calc_win_loss():
         if game['score_home'] == game['score_away']:
             team_home.add_draw()
             team_away.add_draw()
+            draw_cnt += 1
         elif game['score_home'] > game['score_away']:
             team_home.add_win()
             team_away.add_loss()
         else:
             team_home.add_loss()
             team_away.add_win()
+        game_cnt += 1
 
-    #get team classes from dict, get unique classes by converting to set, then resort to get
-    #alphabetical order by team id
+    #get team classes from dict, get unique classes by converting to set, then
+    #resort to get alphabetical order by team id
     for team in sorted(set(teams.values())):
         print(team)
 
-    sum_games = len(games)
-    #div by 2 bc each game increments 2 teams draw values
-    sum_draws = int(sum([team.get_draws() for team in set(teams.values())]) / 2)
-    print(f"Total Games: {sum_games}\t\tTotal Draws: {sum_draws}")
+    print(f"Total Games: {game_cnt}\t\tTotal Draws: {draw_cnt}")
 
 #calc elo using inputed fn
 def calc_end_elo(eval_fn):
@@ -61,8 +67,8 @@ def calc_end_elo(eval_fn):
         team_home.inc_elo(changes['Home Change'])
         team_away.inc_elo(changes['Away Change'])
 
-    #get team classes from dict, get unique classes by converting to set, then resort to get
-    #alphabetical order by team id
+    #get team classes from dict, get unique classes by converting to set, then
+    #resort to get alphabetical order by team id
     for team in sorted(set(teams.values())):
         print(team)
 
@@ -109,7 +115,8 @@ def prediction_basic_stats():
 
     return [result_stats, teams]
 
-def prediction_expanded_stats(k=32, rating_factor=400, hfa_val=50, season_scale=1, playoff_multiplier=1):
+def prediction_expanded_stats(k=32, rating_factor=400, hfa_val=50,\
+                                         season_scale=1, playoff_multiplier=1):
     teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
     result_stats = {"Right": 0, "Wrong": 0}
@@ -123,10 +130,7 @@ def prediction_expanded_stats(k=32, rating_factor=400, hfa_val=50, season_scale=
         for team in [team_home, team_away]:
             team.adj_season(game['schedule_season'], season_scale)
 
-        if game['stadium_neutral'] == "FALSE":
-            hfa = hfa_val
-        else:
-            hfa = 0
+        hfa = hfa_val if game['stadium_neutral'] == "FALSE" else 0
 
         if ec.expanded_expected(team_home.get_elo(), team_away.get_elo(), rating_factor, hfa) >= .5:
             game['Prediction'] = HOME_WIN
@@ -135,15 +139,14 @@ def prediction_expanded_stats(k=32, rating_factor=400, hfa_val=50, season_scale=
 
         #calc if home win, draw, or home loss
         if game['score_home'] == game['score_away']:
-            result = HOME_DRAW
+            game['Result'] = HOME_DRAW
         elif game['score_home'] > game['score_away']:
-            result = HOME_WIN
+            game['Result'] = HOME_WIN
         else:
-            result = HOME_LOSS
+            game['Result'] = HOME_LOSS
 
-        game['Result'] = result
-
-        changes = ec.expanded_elo_change(team_home.get_elo(), team_away.get_elo(), result, k, rating_factor, hfa, playoff_bonus)
+        changes = ec.expanded_elo_change(team_home.get_elo(),\
+             team_away.get_elo(), game['Result'], k, rating_factor, hfa, playoff_bonus)
         team_home.inc_elo(changes['Home Change'])
         team_away.inc_elo(changes['Away Change'])
 
@@ -152,6 +155,22 @@ def prediction_expanded_stats(k=32, rating_factor=400, hfa_val=50, season_scale=
         else:
             result_stats["Wrong"] += 1
 
-    percent = result_stats["Right"] / (result_stats["Right"] + result_stats["Wrong"])
+    return [result_stats, _get_win_rate(result_stats)]
 
-    return [result_stats, percent]
+def _get_win_rate(stats):
+    """
+    Calculates and returns the win rate percentage.
+
+    Parameters
+    ----------
+    stats : dict
+        dict with keys "Right" & "Wrong" with int values describing the games
+        predicted right and wrong.
+
+    Returns
+    -------
+    float
+        float representing win rate
+
+    """
+    return stats["Right"] / (stats["Right"] + stats["Wrong"])
