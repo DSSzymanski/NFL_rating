@@ -79,11 +79,10 @@ def get_graph_max_min(data):
     Max, Min = None, None
     for team in set(data.values()):
         elos = team.get_graph_data()[1]
-        for elo in elos:
-            if Max is None or elo > Max:
-                Max = elo
-            if Min is None or elo < Min:
-                Min = elo
+        if Max is None or max(elos) > Max:
+            Max = max(elos)
+        if Min is None or min(elos) < Min:
+            Min = min(elos)
     return Bounds(Max=Max, Min=Min)
 teams = ['Kansas City Chiefs', 'Las Vegas Raiders', 'Miami Dolphins', 'New England Patriots']
 graph_multiple_teams(teams)
