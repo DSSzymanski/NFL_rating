@@ -1,3 +1,20 @@
+"""
+The data_handler class module handles getting data from the csv files in the data
+folder. Data is then formatted and returned for use.
+
+Classes:
+    EloCalculator:
+        Methods:
+            static _get_teams_file_data() -> list
+            static get_teams() -> dict
+            static get_games_file_data() -> list
+            static _format_games(list) -> list
+
+Global Variables:
+    GAMES_FILE - string with path to csv file that holds all the games data.
+    TEAMS_FILE - string with path to csv file that holds all the teams data.
+"""
+
 import csv
 from nfl_team import NFLTeam
 
@@ -6,6 +23,31 @@ GAMES_FILE = 'data/spreadspoke_scores.csv'
 TEAMS_FILE = 'data/nfl_teams.csv'
 
 class DataHandler:
+    """
+    The DataHandler class handles getting data from the csv files.
+
+    Usage
+    -----
+    Calling get_teams() returns a dict of team_name strings keys referencing
+    nfl_team objects. Each nfl_team is based on it's team_id, so multiple
+    team_names can point to the same nfl_team object. I.E. both 'Arizona
+    Cardinals' and 'Phoenix Cardinals' will have the same NFLTeam created with
+    'ARI'.
+
+    Calling get_games_file_data() will return a list containing every game played
+    in the GAMES_FILE, already formatted to the proper data types.
+
+    Methods
+    -------
+    get_teams() -> dict:
+        returns main teams dict, containing team_name keys and nfl_team values.
+    get_games_file_data() -> list:
+        returns list of all games, with formatted data.
+    _format_games(list data) -> list:
+        formats and returns list of games from GAMES_FILE with proper data types.
+    _get_teams_file_data() -> list:
+        returns list of all team data from TEAMS_FILE.
+    """
     @staticmethod
     def _get_teams_file_data():
         """
@@ -48,18 +90,6 @@ class DataHandler:
         return teams
 
     @staticmethod
-    def elo_dict(data):
-        """
-        Old function to be removed.
-        """
-        elo = {}
-        for team_id in data.values():
-            print(team_id)
-            if team_id not in elo:
-                elo[team_id] = 1200
-        return elo
-
-    @staticmethod
     def get_games_file_data():
         """
         Gets data from the games data file. Returns a list of each game and trims
@@ -91,6 +121,10 @@ class DataHandler:
         data = data[:12947] #trim not-yet played games from data
 
         #cast number strings to ints
+        data = DataHandler._format_games(data)
+        return data
+    @staticmethod
+    def _format_games(data):
         for game in data:
             game['score_home'], game['score_away'] = \
                 int(game['score_home']), int(game['score_away'])
