@@ -65,7 +65,7 @@ class DataHandler:
 
         :returns list: returns list of team data.
         """
-        return [entry for entry in csv.DictReader(open(TEAMS_FILE))]
+        return list(csv.DictReader(open(TEAMS_FILE)))
 
     @staticmethod
     def get_teams():
@@ -117,7 +117,7 @@ class DataHandler:
 
         :returns list: returns list of team data.
         """
-        data = [game for game in csv.DictReader(open(GAMES_FILE))]
+        data = list(csv.DictReader(open(GAMES_FILE)))
         data = data[:12947] #trim not-yet played games from data
 
         #cast number strings to ints
