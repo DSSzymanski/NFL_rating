@@ -1,6 +1,57 @@
+"""
+The genetic_alg module contains the code to perform a genetic algorithm to find
+optimal values for the expanded elo functions. The algorithm takes values set
+randomly for the expanded elo functions for the population entities and uses
+the percentage of games won from the prediction_expanded_stats as the fitness
+function.
+
+Usage
+-----
+Call genetic_algorithm() to run the algorithm. The function can take 2 inputs,
+one for the population size (pop_size) and one for the number of generations run
+(generations). Defaults to 100 pop_size and 100 generations.
+
+Methods
+-------
+genetic_algorithm(int pop_size, int generations) ->
+                                        list[list entity, float fitness_value]:
+    function called to run the genetic algorithm. inputs determine the scope and
+    depth of the algorithm.
+_reproduce(list parent1, list parent2) -> list child:
+    function takes in 2 list of weights and randomly selects gene from both
+    parents or 'mutates' and takes a random gene.
+_mutate(int index) -> int/float:
+    index input determines which random function is called to represent mutation,
+    calling the random function associated with which gene is being replaced.
+_population_fitness(list entity) -> list[list entity, float fitness]:
+    calculates the fitness value given the weights in an entity. returns the
+    entity and the fitness value.
+_population_fitnesses(list[list entity]) -> list[list[list entity, float fitness]]:
+    calculates the fitness values for all entities in a population. returns a
+    list of the entities and their fitness value.
+_initial_population(int pop_size) -> list[entity]:
+    returns a list of randomly generated entities (list of weights) of length
+    pop_size.
+_create_single() -> list:
+    creates and returns a single, randomly generated entity (list of weights)
+    to be used in a population.
+_random_k() -> int:
+    returns a random int to be used as a weight for the k-factor.
+_random_rf() -> int:
+    returns a random int to be used as a weight for the rating-factor.
+_random_hfa() -> int:
+    returns a random int to be used as a weight for the home field advantage.
+_random_scale() -> float:
+    returns a random float to be used as a weight for the seasonal scaling.
+_random_playoff_multiplier() -> float:
+    returns a random float to be used as a weight for the playoff multiplier.
+"""
+
 import math
 from random import randint, random
 from stat_eval import prediction_expanded_stats
+
+WEIGHTS = ['k', 'rf', 'hfa', 'scale', 'pm']
 
 def genetic_algorithm(pop_size=100, generations=100):
     """
@@ -18,9 +69,9 @@ def genetic_algorithm(pop_size=100, generations=100):
                   up of the entity and it's associated fitness value.
     """
     #generate initial population
-    population = initial_population(pop_size)
+    population = _initial_population(pop_size)
     #find fitness of initial population and prune so that only 2/3 remain
-    pop_fitness = population_fitnesses(population)[:2*math.floor(pop_size/3)]
+    pop_fitness = _population_fitnesses(population)[:2*math.floor(pop_size/3)]
     #get best entity and fitness for print statement
     pop_fitness[0][1] = round(pop_fitness[0][1], 5)
     #get worst entity and fitness for print statement
@@ -38,13 +89,13 @@ def genetic_algorithm(pop_size=100, generations=100):
             parent1 = pop_fitness[randint(0, len(pop_fitness)-1)][0]
             parent2 = pop_fitness[randint(0, len(pop_fitness)-1)][0]
             #reproduce and add to new population
-            child = reproduce(parent1, parent2)
+            child = _reproduce(parent1, parent2)
             new_population.append(child)
 
         #update population to new children generated in function
         population = new_population
         #find fitness of new population and prune so that only 2/3 remain
-        pop_fitness = population_fitnesses(population)[:2*math.floor(pop_size/3)]
+        pop_fitness = _population_fitnesses(population)[:2*math.floor(pop_size/3)]
         #get best and worst fitness based entities for print statement
         pop_fitness[0][1] = round(pop_fitness[0][1], 5)
         pop_fitness[len(pop_fitness)-1][1] = round(pop_fitness[len(pop_fitness)-1][1], 5)
@@ -52,12 +103,17 @@ def genetic_algorithm(pop_size=100, generations=100):
 
     return pop_fitness
 
-def reproduce(parent1, parent2):
+def _reproduce(parent1, parent2):
     """
     Simulates reproduction between 2 entities. Instead of selecting a crossover
     point as traditionally is done, generates random number to decide. Each
     parent has a 45% chance of having their gene selected while there's a 10%
     chance of the gene mutating. Returns a new entity.
+
+    :param parent1: list containing weights used for an entity of the population.
+    :param parent2: list containing weights used for an entity of the population.
+
+    :returns child: list containing weights used for an entity of the population.
     """
     child = []
     for index, (gene1, gene2) in enumerate(zip(parent1, parent2)):
@@ -67,10 +123,10 @@ def reproduce(parent1, parent2):
         elif prob <= .9:
             child.append(gene2)
         else:
-            child.append(mutate(index))
+            child.append(_mutate(index))
     return child
 
-def mutate(index):
+def _mutate(index):
     """
     Simulates a 'mutated gene' by taking which gene is being mutated and generating
     a new random value for that gene.
@@ -82,16 +138,16 @@ def mutate(index):
                        representing a new mutated gene.
     """
     if index == 0:
-        return random_k()
+        return _random_k()
     if index == 1:
-        return random_rf()
+        return _random_rf()
     if index == 2:
-        return random_hfa()
+        return _random_hfa()
     if index == 3:
-        return random_scale()
-    return random_playoff_multiplier()
+        return _random_scale()
+    return _random_playoff_multiplier()
 
-def population_fitness(entity):
+def _population_fitness(entity):
     """
     Calculates the fitness value for a single entity using an evaluation of
     how many games are predicted right that are in the dataset.
@@ -105,7 +161,7 @@ def population_fitness(entity):
     prediction = prediction_expanded_stats(entity[0], entity[1], entity[2], entity[3], entity[4])[1]
     return [entity, prediction]
 
-def population_fitnesses(pop):
+def _population_fitnesses(pop):
     """
     Calculates the fitness values for every entity in a population using an
     evaluation of how many games are predicted right that are in the dataset.
@@ -124,15 +180,15 @@ def population_fitnesses(pop):
         prediction = prediction_expanded_stats(entity[0], entity[1], entity[2],\
                                                entity[3], entity[4])[1]
         pop_fitness.append([entity, prediction])
-    """
-    Sort all values according to their fitness value.
-    IMPORTANT: entities in population are pruned later for reproduction, so a
-    change in ordering will cause the algorithm to choose non-ideal candidates
-    for reproduction.
-    """
+
+    #Sort all values according to their fitness value.
+    #IMPORTANT: entities in population are pruned later for reproduction, so a
+    #change in ordering will cause the algorithm to choose non-ideal candidates
+    #for reproduction.
+
     return sorted(pop_fitness, key=lambda x:x[1], reverse=True)
 
-def initial_population(pop_size):
+def _initial_population(pop_size):
     """
     Initializes a population to be used in the genetic algorithm. The population
     is determined on the input size of randomly created entities and returned
@@ -145,24 +201,24 @@ def initial_population(pop_size):
     """
     pop = []
     for _ in range(pop_size):
-        pop.append(create_single())
+        pop.append(_create_single())
     return pop
 
-def create_single():
+def _create_single():
     """
     Creates a single entity for a population. Entity consists of random numbers
     for each gene and is returned as a list.
 
     :return list: returns a list of random number representing a single entity.
     """
-    k = random_k()
-    rating_factor = random_rf()
-    hfa = random_hfa()
-    scale = random_scale()
-    playoff_multiplier = random_playoff_multiplier()
+    k = _random_k()
+    rating_factor = _random_rf()
+    hfa = _random_hfa()
+    scale = _random_scale()
+    playoff_multiplier = _random_playoff_multiplier()
     return [k, rating_factor, hfa, scale, playoff_multiplier]
 
-def random_k():
+def _random_k():
     """
     Generates a random number for the k-factor in the elo calculation between
     1 and 1000. K-factor is a boundry on the max amount an elo can change in 1
@@ -174,7 +230,7 @@ def random_k():
     """
     return randint(1, 1000)
 
-def random_rf():
+def _random_rf():
     """
     Generates a random number for the rating-factor in the elo calculation between
     50 and 1000. The rating factor determines how much elo it takes to increase
@@ -187,7 +243,7 @@ def random_rf():
     """
     return randint(50, 10000)
 
-def random_hfa():
+def _random_hfa():
     """
     Generates a random number between 0 and 500 for the home field advantage,
     which is a flat elo increase for the home team.
@@ -196,7 +252,7 @@ def random_hfa():
     """
     return randint(0, 500)
 
-def random_scale():
+def _random_scale():
     """
     Generates a random number between 0 and 100 to scale the teams elo after
     each season. The number is divided by 100 to create and return a float.
@@ -205,7 +261,7 @@ def random_scale():
     """
     return randint(0, 100)/100
 
-def random_playoff_multiplier():
+def _random_playoff_multiplier():
     """
     Generates a random number between 1 and 200 to scale the elo changes
     that result from playoff games. The number is divided by 100 to create and
@@ -214,6 +270,4 @@ def random_playoff_multiplier():
     :return float: returns an float greater than 0 and <= 2.
     """
     return randint(1, 200)/100
-
-genetic_algorithm(250, 250)
-print(f'Base elo calculation: {population_fitness([32, 400, 0, 1, 1])}')
+genetic_algorithm()

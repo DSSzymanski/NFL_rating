@@ -11,9 +11,9 @@ Classes:
             static basic_expected(int, int) -> float
 
 Global Variables:
-    HOME_WIN - var used to indicate the home team won a game.
-    HOME_LOSS - var used to indicate the home team lost a game.
-    HOME_DRAW - var used to indicate the home team drew a game.
+    HOME_WIN - int used to indicate the home team won a game.
+    HOME_LOSS - int used to indicate the home team lost a game.
+    HOME_DRAW - int used to indicate the home team drew a game.
 """
 HOME_WIN = 0 #0 for when home team wins
 HOME_LOSS = 1 #1 for when home team loses
