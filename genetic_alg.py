@@ -49,9 +49,9 @@ _random_playoff_multiplier() -> float:
 
 import math
 from random import randint, random
-from stat_eval import prediction_expanded_stats
+from stat_eval import prediction_expanded_stats, get_accuracy
 
-WEIGHTS = ['k', 'rf', 'hfa', 'scale', 'pm']
+#WEIGHTS = ['k', 'rf', 'hfa', 'scale', 'pm']
 
 def genetic_algorithm(pop_size=100, generations=100):
     """
@@ -71,15 +71,10 @@ def genetic_algorithm(pop_size=100, generations=100):
     #generate initial population
     population = _initial_population(pop_size)
     #find fitness of initial population and prune so that only 2/3 remain
-    pop_fitness = _population_fitnesses(population)[:2*math.floor(pop_size/3)]
-    #get best entity and fitness for print statement
-    pop_fitness[0][1] = round(pop_fitness[0][1], 5)
-    #get worst entity and fitness for print statement
-    pop_fitness[len(pop_fitness)-1][1] = round(pop_fitness[len(pop_fitness)-1][1], 5)
-    print(f'Initial Generation: Best: {pop_fitness[0]} Worst: {pop_fitness[len(pop_fitness)-1]}')
+    pop_fitness = _population_fitnesses(population)[:2*math.floor(pop_size/3)] #todo: error check
 
-    #loops 1 through generations+1 because generation 0 is the initial gen.
-    for gen in range(1, generations+1):
+    for gen in range(0, generations):
+        _print_gen_stats(pop_fitness, gen)
         new_population = []
         #elitism, add previous generation's best fitness valued entity
         new_population.append(pop_fitness[0][0])
@@ -96,12 +91,21 @@ def genetic_algorithm(pop_size=100, generations=100):
         population = new_population
         #find fitness of new population and prune so that only 2/3 remain
         pop_fitness = _population_fitnesses(population)[:2*math.floor(pop_size/3)]
-        #get best and worst fitness based entities for print statement
-        pop_fitness[0][1] = round(pop_fitness[0][1], 5)
-        pop_fitness[len(pop_fitness)-1][1] = round(pop_fitness[len(pop_fitness)-1][1], 5)
-        print(f'Generation {gen}: Best: {pop_fitness[0]} Worst: {pop_fitness[len(pop_fitness)-1]}')
-
+    
+    _print_gen_stats(pop_fitness, generations)
     return pop_fitness
+
+def _print_gen_stats(population, generation):
+    #get best entity and fitness for print statement
+    best_fitness = population[0].copy()
+    best_fitness[1] = round(best_fitness[1], 5)
+    #get worst entity and fitness for print statement
+    worst_fitness = population[-1].copy()
+    worst_fitness[1] = round(worst_fitness[1], 5)
+    if generation == 0:
+        print(f'Initial Generation: Best: {best_fitness} Worst: {worst_fitness}')
+    else:
+        print(f'Generation {generation}: Best: {best_fitness} Worst: {worst_fitness}')
 
 def _reproduce(parent1, parent2):
     """
@@ -158,8 +162,9 @@ def _population_fitness(entity):
 
     :return list: a list containing the entity and it's fitness value.
     """
-    prediction = prediction_expanded_stats(entity[0], entity[1], entity[2], entity[3], entity[4])[1]
-    return [entity, prediction]
+    predictions = prediction_expanded_stats(entity[0], entity[1], entity[2],\
+                                                       entity[3], entity[4])[0]
+    return [entity, get_accuracy(predictions)]
 
 def _population_fitnesses(pop):
     """
@@ -177,9 +182,9 @@ def _population_fitnesses(pop):
     pop_fitness = []
     for entity in pop:
         #run against every game and get percentage of games predicted right
-        prediction = prediction_expanded_stats(entity[0], entity[1], entity[2],\
-                                               entity[3], entity[4])[1]
-        pop_fitness.append([entity, prediction])
+        predictions = prediction_expanded_stats(entity[0], entity[1], entity[2],\
+                                               entity[3], entity[4])[0]
+        pop_fitness.append([entity, get_accuracy(predictions)])
 
     #Sort all values according to their fitness value.
     #IMPORTANT: entities in population are pruned later for reproduction, so a
@@ -270,4 +275,4 @@ def _random_playoff_multiplier():
     :return float: returns an float greater than 0 and <= 2.
     """
     return randint(1, 200)/100
-genetic_algorithm()
+genetic_algorithm(10,2)
