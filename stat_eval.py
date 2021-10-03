@@ -18,13 +18,13 @@ prediction_basic_stats() -> list[dict, dict]:
     of right/wrong predictions and updates each nfl_team's elo after each game
     using the basic standard elo calculation. Once completed, returns a dict of
     right/wrong predictions and the teams dict with updated nfl_teams.
-prediction_expanded_stats(int, int, int, float, float) -> list[dict, float]:
+prediction_expanded_stats(int, int, int, float, float) -> list[dict, dict]:
     iterates through all the games and predicts winners based on the teams elo,
     then compares the end result to the prediction. The function monitors the num
     of right/wrong predictions and updates each nfl_team's elo after each game
     using the expanded elo calculation with the input parameters. Once
-    completed, returns a dict of right/wrong predictions and a float with the
-    right prediction percentage.
+    completed, returns a dict of right/wrong predictions and the teams dict with
+    updated nfl_teams.
 get_accuracy(dict stats) -> float:
     takes in a dict of 'Right' and 'Wrong' values and returns the percentage of
     right predictions.
@@ -206,9 +206,7 @@ def prediction_expanded_stats(k=32, rating_factor=400, hfa_val=0,\
     -------
     list
         returns list of 2 items. First is a dict of 'Right'ly predicted games and
-        'Wrong'ly predicted games. Second is the win rate percentage associated
-        with the predicted games using the inputed params.
-
+        'Wrong'ly predicted games. Second is the dict of 'team_name's to nfl_teams.
     """
     teams = DataHandler.get_teams()
     games = DataHandler.get_games_file_data()
@@ -250,7 +248,7 @@ def prediction_expanded_stats(k=32, rating_factor=400, hfa_val=0,\
         else:
             result_stats["Wrong"] += 1
 
-    return [result_stats, get_accuracy(result_stats)]
+    return [result_stats, teams]
 
 def get_accuracy(stats):
     """
