@@ -17,6 +17,11 @@ genetic_algorithm(int pop_size, int generations) ->
                                         list[list entity, float fitness_value]:
     function called to run the genetic algorithm. inputs determine the scope and
     depth of the algorithm.
+_validate_inputs(int pop_size, int generations) -> none:
+    checks pop_size and generations to make sure they are within legal type &
+    range.
+_print_gen_stats(list population, int generation) -> none:
+    prints best/worst entities in population to console.
 _reproduce(list parent1, list parent2) -> list child:
     function takes in 2 list of weights and randomly selects gene from both
     parents or 'mutates' and takes a random gene.
@@ -45,16 +50,24 @@ _random_scale() -> float:
     returns a random float to be used as a weight for the seasonal scaling.
 _random_playoff_multiplier() -> float:
     returns a random float to be used as a weight for the playoff multiplier.
+
+Global Vars
+-----------
+MIN_POP_SIZE: lower bound for pop_size input in genetic_algorithm. set to 3 to
+              avoid all entities being removed from the population during pruning.
+MIN_GEN_SIZE: lower bound for generations input in genetic_algorithm.
 """
 
 import math
 from random import randint, random
+from errors import InputTooSmallError
 from stat_eval import prediction_expanded_stats, get_accuracy
 
+MIN_POP_SIZE = 3
+MIN_GEN_SIZE = 1
 #WEIGHTS = ['k', 'rf', 'hfa', 'scale', 'pm']
 
 #TODO: change random generated genes to SINGLE function
-#TODO: error check pop size so pruning doesn't make len(pop) 0
 def genetic_algorithm(pop_size=100, generations=100):
     """
     Genetic algorithm is the main function that is called to try and generate
@@ -64,12 +77,15 @@ def genetic_algorithm(pop_size=100, generations=100):
     is run with a population of pop_size and generations number of times.
 
     :param pop_size: int value representing how many entities are in a population.
+                     must be >= 3
     :param generations: int value representing how many times the genetic algorithm
                         will run.
 
     :return list: returns list of lists, representing the final population made
                   up of the entity and it's associated fitness value.
     """
+    _validate_inputs(pop_size, generations)
+
     #generate initial population
     population = _initial_population(pop_size)
     #amount to prune pop_fitness by
@@ -101,7 +117,63 @@ def genetic_algorithm(pop_size=100, generations=100):
     _print_gen_stats(pop_fitness, generations)
     return pop_fitness
 
+def _validate_inputs(pop_size, generations):
+    """
+    Checks to make sure genetic_algorithm inputs are both ints and both above
+    their min value.
+
+    Parameters
+    ----------
+    pop_size : int
+        pop_size param to check if valid.
+    generations : int
+        generations param to check if valid.
+
+    Raises
+    ------
+    TypeError
+        If pop_size or generations are not ints, raises TypeError.
+    InputTooSmallError
+        If pop_size or generations are below their min value, raises
+        InputTooSmallError.
+
+    Returns
+    -------
+    None.
+
+    """
+    #check input types
+    if not isinstance(pop_size, int):
+        raise TypeError(f"pop_size expected an int and received a {type(pop_size)}")
+    if not isinstance(generations, int):
+        raise TypeError(f"generations expected an int and received a {type(generations)}")
+
+    #check input size greater than min. if 0 < pop_size < 3, when the fitness
+    #list is pruned, it will remove all entities from the population
+    if pop_size < MIN_POP_SIZE:
+        raise InputTooSmallError(pop_size, MIN_POP_SIZE, 'pop_size')
+    if generations < MIN_GEN_SIZE:
+        raise InputTooSmallError(generations, MIN_GEN_SIZE, 'generations')
+
+
+
 def _print_gen_stats(population, generation):
+    """
+    Print statement that prints the best/worst entities to the console based on
+    their fitness values.
+
+    Parameters
+    ----------
+    population : list[list, float]
+        population list consisting of entities and their fitness value.
+    generation : int
+        which generation number the print fn is called from.
+
+    Returns
+    -------
+    none
+        prints population data to console.
+    """
     #get best entity and fitness for print statement
     best_fitness = population[0].copy()
     best_fitness[1] = round(best_fitness[1], 5)
@@ -281,4 +353,3 @@ def _random_playoff_multiplier():
     :return float: returns an float greater than 0 and <= 2.
     """
     return randint(1, 200)/100
-genetic_algorithm(10,2)
