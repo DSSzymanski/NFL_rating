@@ -53,6 +53,8 @@ from stat_eval import prediction_expanded_stats, get_accuracy
 
 #WEIGHTS = ['k', 'rf', 'hfa', 'scale', 'pm']
 
+#TODO: change random generated genes to SINGLE function
+#TODO: error check pop size so pruning doesn't make len(pop) 0
 def genetic_algorithm(pop_size=100, generations=100):
     """
     Genetic algorithm is the main function that is called to try and generate
@@ -70,19 +72,23 @@ def genetic_algorithm(pop_size=100, generations=100):
     """
     #generate initial population
     population = _initial_population(pop_size)
-    #find fitness of initial population and prune so that only 2/3 remain
-    pop_fitness = _population_fitnesses(population)[:2*math.floor(pop_size/3)] #todo: error check
+    #amount to prune pop_fitness by
+    prune_idx = 2*math.floor(pop_size/3)
+    #find fitness of initial population and prune
+    pop_fitness = _population_fitnesses(population)[:prune_idx]
 
+    #run main algorithm loop
     for gen in range(0, generations):
         _print_gen_stats(pop_fitness, gen)
         new_population = []
         #elitism, add previous generation's best fitness valued entity
         new_population.append(pop_fitness[0][0])
 
+        #start at 1 bc elitism already adds first entity to new pop.
         for _ in range(1, pop_size):
             #genetic selection
-            parent1 = pop_fitness[randint(0, len(pop_fitness)-1)][0]
-            parent2 = pop_fitness[randint(0, len(pop_fitness)-1)][0]
+            parent1 = pop_fitness[randint(0, prune_idx-1)][0]
+            parent2 = pop_fitness[randint(0, prune_idx-1)][0]
             #reproduce and add to new population
             child = _reproduce(parent1, parent2)
             new_population.append(child)
@@ -90,8 +96,8 @@ def genetic_algorithm(pop_size=100, generations=100):
         #update population to new children generated in function
         population = new_population
         #find fitness of new population and prune so that only 2/3 remain
-        pop_fitness = _population_fitnesses(population)[:2*math.floor(pop_size/3)]
-    
+        pop_fitness = _population_fitnesses(population)[:prune_idx]
+
     _print_gen_stats(pop_fitness, generations)
     return pop_fitness
 
